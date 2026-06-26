@@ -123,16 +123,16 @@ export async function GET(request) {
     // ── Valuation Calculations ─────────────────────────────────────────────
     // EPS growth rate: use YoY if available, fallback to earningsGrowth
     const epsGrowthRate = earningsGrowth ?? 0.12
-    const peterLynchScore = eps && pe && epsGrowthRate
-      ? (epsGrowthRate * 100 + divYield * 100) / pe : null
+    const peterLynchScore = eps && pe && epsGrowthRate !== null
+      ? (epsGrowthRate * 100 + (divYield || 0) * 100) / pe : null
 
-    const pegyRatio = pe && epsGrowthRate && divYield
-      ? pe / ((epsGrowthRate + divYield) * 100) : null
+    const pegyRatio = pe && epsGrowthRate !== null && divYield !== null
+      ? pe / ((epsGrowthRate + (divYield || 0)) * 100) : null
 
     // EPS-based fair value: Peter Lynch Fair Value
     // Fair P/E = Growth Rate + Dividend Yield
-    const peterLynchFairValue = eps && epsGrowthRate > 0
-      ? eps * ((epsGrowthRate + divYield) * 100) : null
+    const peterLynchFairValue = eps !== null && epsGrowthRate !== null
+      ? eps * ((epsGrowthRate + (divYield || 0)) * 100) : null
 
     const targetPrice = peterLynchFairValue ? peterLynchFairValue * 1.15 : null
     const upsidePct = targetPrice && currentPrice ? ((targetPrice - currentPrice) / currentPrice) * 100 : null
