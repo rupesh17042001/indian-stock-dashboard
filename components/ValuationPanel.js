@@ -15,9 +15,9 @@ export default function ValuationPanel({ data }) {
 
   const blocks = [
     {
-      id: 'lynch',
-      title: 'Peter Lynch Fair Value',
-      desc: 'Fair Value = EPS × (Growth Rate + Dividend Yield)',
+      id: 'lynch_current',
+      title: 'Peter Lynch Fair Value (Current)',
+      desc: 'Based on Trailing 12-Month EPS and Current Expected Growth.',
       formula: 'EPS × (Growth + Div Yield) × 100',
       value: data.peterLynchFairValue,
       mos: data.peterLynchFairValue ? ((data.peterLynchFairValue - p) / data.peterLynchFairValue) * 100 : null,
@@ -26,11 +26,49 @@ export default function ValuationPanel({ data }) {
       tag: data.peterLynchFairValue > p * 1.1 ? '🟢 Discount' : data.peterLynchFairValue < p * 0.9 ? '🔴 Premium' : '🟡 Fair',
       details: [
         { l: 'Trailing EPS', v: fmtINR(data.eps) },
-        { l: 'Growth Rate', v: fmtN((data.earningsGrowth||0.12)*100) + '%' },
-        { l: 'Score (GARP)', v: fmtN(data.peterLynchScore) }
+        { l: 'Growth Rate', v: fmtN((data.earningsGrowth||0)*100) + '%' },
+        { l: 'Div Yield', v: fmtN((data.divYield||0)*100) + '%' }
       ]
     }
   ]
+
+  if (data.peterLynchFairValueNextQtr && data.nextQtrValues) {
+    blocks.push({
+      id: 'lynch_next_qtr',
+      title: 'Peter Lynch Fair Value (Next Qtr)',
+      desc: 'Based on Annualized Next Quarter EPS Estimates.',
+      formula: '(Next Qtr EPS × 4) × (Next Qtr Growth + Div Yield) × 100',
+      value: data.peterLynchFairValueNextQtr,
+      mos: data.peterLynchFairValueNextQtr ? ((data.peterLynchFairValueNextQtr - p) / data.peterLynchFairValueNextQtr) * 100 : null,
+      mosLabel: 'Discount to Fair Value',
+      signal: data.peterLynchFairValueNextQtr > p * 1.1 ? 'bull' : data.peterLynchFairValueNextQtr < p * 0.9 ? 'bear' : 'neut',
+      tag: data.peterLynchFairValueNextQtr > p * 1.1 ? '🟢 Discount' : data.peterLynchFairValueNextQtr < p * 0.9 ? '🔴 Premium' : '🟡 Fair',
+      details: [
+        { l: 'Annualized EPS', v: fmtINR(data.nextQtrValues.eps) },
+        { l: 'Growth Rate', v: fmtN(data.nextQtrValues.growth * 100) + '%' },
+        { l: 'Div Yield', v: fmtN(data.nextQtrValues.divYield * 100) + '%' }
+      ]
+    })
+  }
+
+  if (data.peterLynchFairValueNextYear && data.nextYearValues) {
+    blocks.push({
+      id: 'lynch_next_year',
+      title: 'Peter Lynch Fair Value (Next Year)',
+      desc: 'Based on Next Year (FY) EPS Estimates.',
+      formula: 'Next Year EPS × (Next Year Growth + Div Yield) × 100',
+      value: data.peterLynchFairValueNextYear,
+      mos: data.peterLynchFairValueNextYear ? ((data.peterLynchFairValueNextYear - p) / data.peterLynchFairValueNextYear) * 100 : null,
+      mosLabel: 'Discount to Fair Value',
+      signal: data.peterLynchFairValueNextYear > p * 1.1 ? 'bull' : data.peterLynchFairValueNextYear < p * 0.9 ? 'bear' : 'neut',
+      tag: data.peterLynchFairValueNextYear > p * 1.1 ? '🟢 Discount' : data.peterLynchFairValueNextYear < p * 0.9 ? '🔴 Premium' : '🟡 Fair',
+      details: [
+        { l: 'Expected EPS', v: fmtINR(data.nextYearValues.eps) },
+        { l: 'Growth Rate', v: fmtN(data.nextYearValues.growth * 100) + '%' },
+        { l: 'Div Yield', v: fmtN(data.nextYearValues.divYield * 100) + '%' }
+      ]
+    })
+  }
 
   const targetPrice = data.peterLynchFairValue ? data.peterLynchFairValue * 1.15 : null
   const upsidePct = targetPrice && p ? ((targetPrice - p) / p) * 100 : null
@@ -43,7 +81,7 @@ export default function ValuationPanel({ data }) {
             <h3 style={{ fontSize: 14, color: 'var(--blue2)', marginBottom: 4, textTransform: 'uppercase', letterSpacing: '0.05em' }}>Target Price</h3>
             <div style={{ fontSize: 36, fontWeight: 800, fontFamily: 'Space Grotesk' }}>{fmtINR(targetPrice)}</div>
             <div style={{ fontSize: 13, color: 'var(--text2)', marginTop: 4 }}>
-              Target = Peter Lynch Fair Value × 1.15 buffer
+              Target = Current Peter Lynch Fair Value × 1.15 buffer
             </div>
           </div>
           <div style={{ textAlign: 'right' }}>
@@ -61,7 +99,7 @@ export default function ValuationPanel({ data }) {
       <div className="grid-2" style={{ gridColumn: '1 / -1' }}>
         {blocks.map(b => {
           return (
-            <div key={b.title} className="card">
+            <div key={b.id} className="card">
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 16 }}>
                 <div>
                   <h3 style={{ fontSize: 18, fontWeight: 700, fontFamily: 'Space Grotesk', display: 'flex', alignItems: 'center', gap: '8px' }}>

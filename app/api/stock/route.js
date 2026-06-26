@@ -134,6 +134,27 @@ export async function GET(request) {
     const peterLynchFairValue = eps !== null && epsGrowthRate !== null
       ? eps * ((epsGrowthRate + (divYield || 0)) * 100) : null
 
+    let peterLynchFairValueNextQtr = null;
+    let nextQtrValues = null;
+    let peterLynchFairValueNextYear = null;
+    let nextYearValues = null;
+
+    if (earningsTrend && earningsTrend.length > 0) {
+      const nextQtr = earningsTrend.find(t => t.period === '+1q');
+      if (nextQtr && nextQtr.earningsEstimate?.avg && nextQtr.growth !== null && nextQtr.growth !== undefined) {
+        // Annualize quarterly EPS to calculate a comparable share price fair value
+        const annualizedEps = nextQtr.earningsEstimate.avg * 4;
+        peterLynchFairValueNextQtr = annualizedEps * ((nextQtr.growth + (divYield || 0)) * 100);
+        nextQtrValues = { eps: annualizedEps, growth: nextQtr.growth, divYield: divYield || 0 };
+      }
+      
+      const nextYear = earningsTrend.find(t => t.period === '+1y');
+      if (nextYear && nextYear.earningsEstimate?.avg && nextYear.growth !== null && nextYear.growth !== undefined) {
+        peterLynchFairValueNextYear = nextYear.earningsEstimate.avg * ((nextYear.growth + (divYield || 0)) * 100);
+        nextYearValues = { eps: nextYear.earningsEstimate.avg, growth: nextYear.growth, divYield: divYield || 0 };
+      }
+    }
+
     const targetPrice = peterLynchFairValue ? peterLynchFairValue * 1.15 : null
     const upsidePct = targetPrice && currentPrice ? ((targetPrice - currentPrice) / currentPrice) * 100 : null
     const earningsYield = eps && currentPrice ? (eps / currentPrice) * 100 : null
@@ -256,6 +277,10 @@ export async function GET(request) {
       peterLynchScore,
       pegyRatio,
       peterLynchFairValue,
+      peterLynchFairValueNextQtr,
+      nextQtrValues,
+      peterLynchFairValueNextYear,
+      nextYearValues,
       targetPrice,
       upsidePct,
       earningsYield,

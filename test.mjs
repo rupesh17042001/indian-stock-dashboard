@@ -4,21 +4,9 @@ async function test() {
   const req = { url: 'http://localhost/api/stock?ticker=WIPRO' };
   const res = await GET(req);
   const j = await res.json();
-  console.log(JSON.stringify({
-    ticker: j.ticker,
-    eps: j.eps, 
-    growth: j.earningsGrowth, 
-    divYield: j.divYield, 
-    pe: j.pe, 
-    peterLynchScore: j.peterLynchScore, 
-    peterLynchFairValue: j.peterLynchFairValue,
-    targetPrice: j.targetPrice,
-    rawValues: {
-      pe: j.pe,
-      eps: j.eps,
-      divYield: j.divYield,
-      earningsGrowth: j.earningsGrowth
-    }
-  }, null, 2));
+  const nextQtr = j.earningsTrend?.find(t => t.period === '+1q');
+  const nextYear = j.earningsTrend?.find(t => t.period === '+1y');
+  console.log("Next Qtr EPS:", nextQtr?.earningsEstimate?.avg, "Growth:", nextQtr?.growth);
+  console.log("Next Yr EPS:", nextYear?.earningsEstimate?.avg, "Growth:", nextYear?.growth);
 }
 test();
