@@ -322,11 +322,9 @@ export default function Dashboard() {
               <div className="card">
                 <div className="card-title"><span className="card-title-icon">📐</span>Quick Valuation</div>
                 {[
-                  { label: 'Graham Number', value: fmtINR(data.grahamNumber), sub: `MoS: ${fmtN(data.mosGraham)}%`, signal: (data.mosGraham||0) > 20 ? 'bull' : (data.mosGraham||0) < 0 ? 'bear' : 'neut', tag: (data.mosGraham||0) > 20 ? '🟢 Buy Zone' : (data.mosGraham||0) < 0 ? '🔴 Overvalued' : '🟡 Fair' },
                   { label: 'Peter Lynch Fair Value', value: fmtINR(data.peterLynchFairValue), sub: 'EPS × (Growth + Div Yield) × 100', signal: (data.peterLynchFairValue||0) > data.currentPrice ? 'bull' : 'bear', tag: '' },
                   { label: 'PEG Ratio', value: fmtN(data.pegRatio || data.pegyRatio), sub: '<1 = undervalued', signal: (data.pegRatio||9) < 1 ? 'bull' : (data.pegRatio||0) > 2 ? 'bear' : 'neut', tag: '' },
-                  { label: 'Blended Fair Value', value: fmtINR(data.blendedFV), sub: 'Graham + DCF + Lynch', signal: (data.upsidePct||0) > 15 ? 'bull' : (data.upsidePct||0) < -15 ? 'bear' : 'neut', tag: '' },
-                  { label: 'Target Price', value: fmtINR(data.targetPrice), sub: 'Fair value × 1.15', signal: 'neut', tag: '' },
+                  { label: 'Target Price', value: fmtINR(data.targetPrice), sub: 'Peter Lynch FV × 1.15', signal: 'neut', tag: '' },
                   { label: 'Earnings Yield', value: fmtN(data.earningsYield) + '%', sub: 'vs 10Y G-Sec ~7%', signal: (data.earningsYield||0) > 7 ? 'bull' : 'bear', tag: '' },
                 ].map(item => (
                   <div className="val-row" key={item.label}>

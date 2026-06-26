@@ -121,12 +121,6 @@ export async function GET(request) {
     })).filter(a => a.year)
 
     // ── Valuation Calculations ─────────────────────────────────────────────
-    const grahamNumber = eps && bookValue && eps > 0 && bookValue > 0
-      ? Math.sqrt(22.5 * eps * bookValue) : null
-    
-    const mosGraham = grahamNumber && currentPrice
-      ? ((grahamNumber - currentPrice) / grahamNumber) * 100 : null
-
     // EPS growth rate: use YoY if available, fallback to earningsGrowth
     const epsGrowthRate = earningsGrowth ?? 0.12
     const peterLynchScore = eps && pe && epsGrowthRate
@@ -135,22 +129,12 @@ export async function GET(request) {
     const pegyRatio = pe && epsGrowthRate && divYield
       ? pe / ((epsGrowthRate + divYield) * 100) : null
 
-    // DCF (Gordon Growth Model): div / (r - g)
-    const annualDiv = currentPrice && divYield ? currentPrice * divYield : 0
-    const requiredReturn = 0.12
-    const terminalGrowth = 0.04
-    const dcfValue = annualDiv > 0 ? annualDiv / (requiredReturn - terminalGrowth) : null
-
     // EPS-based fair value: Peter Lynch Fair Value
     // Fair P/E = Growth Rate + Dividend Yield
     const peterLynchFairValue = eps && epsGrowthRate > 0
       ? eps * ((epsGrowthRate + divYield) * 100) : null
 
-    const blendedFV = grahamNumber || dcfValue || peterLynchFairValue
-      ? [grahamNumber, dcfValue, peterLynchFairValue].filter(v => v && v > 0).reduce((a,b,_,arr) => a + b/arr.length, 0)
-      : null
-
-    const targetPrice = blendedFV ? blendedFV * 1.15 : null
+    const targetPrice = peterLynchFairValue ? peterLynchFairValue * 1.15 : null
     const upsidePct = targetPrice && currentPrice ? ((targetPrice - currentPrice) / currentPrice) * 100 : null
     const earningsYield = eps && currentPrice ? (eps / currentPrice) * 100 : null
 
@@ -224,9 +208,8 @@ export async function GET(request) {
 
     // ── Overall Signal ─────────────────────────────────────────────────────
     let overallSignal = 'HOLD'
-    if (peterLynchScore !== null && peterLynchScore < 1 && (mosGraham || 0) > 10) overallSignal = 'BUY'
-    else if ((mosGraham || 0) > 20 && piotroski >= 6) overallSignal = 'BUY'
-    else if ((mosGraham || 0) < -20 || (peterLynchScore || 0) > 2) overallSignal = 'AVOID'
+    if (peterLynchScore !== null && peterLynchScore < 1) overallSignal = 'BUY'
+    else if ((peterLynchScore || 0) > 2) overallSignal = 'AVOID'
 
     return Response.json({
       ticker,
@@ -270,17 +253,12 @@ export async function GET(request) {
       revenueGrowth,
       earningsGrowth,
       // Valuation
-      grahamNumber,
-      mosGraham,
       peterLynchScore,
       pegyRatio,
-      dcfValue,
       peterLynchFairValue,
-      blendedFV,
       targetPrice,
       upsidePct,
       earningsYield,
-      annualDiv,
       // Health
       piotroski,
       piotroskiSignals,
