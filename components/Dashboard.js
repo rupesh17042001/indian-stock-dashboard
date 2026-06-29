@@ -268,19 +268,14 @@ export default function Dashboard() {
                     <div className="kpi-sub">Return on Equity (Profitability)</div>
                   </div>
                   <div className="kpi">
-                    <div className="kpi-label">Debt/Equity</div>
-                    <div className={`kpi-value ${(data.debtToEquity||999)<50?'green':(data.debtToEquity||0)<100?'amber':'red'}`}>{data.debtToEquity !== null ? fmtN(data.debtToEquity/100, 2) : '—'}</div>
-                    <div className="kpi-sub">Financial Leverage</div>
-                  </div>
-                  <div className="kpi">
                     <div className="kpi-label">Div Yield</div>
                     <div className="kpi-value amber">{data.divYield ? fmtN(data.divYield * 100) + '%' : '—'}</div>
                     <div className="kpi-sub">Annual Dividend Return</div>
                   </div>
                   <div className="kpi">
-                    <div className="kpi-label">Free Cash Flow</div>
-                    <div className={`kpi-value ${(data.fcf||0)>0?'green':'red'}`}>{fmt(data.fcf, '₹')}</div>
-                    <div className="kpi-sub">Cash generated</div>
+                    <div className="kpi-label">Face Value</div>
+                    <div className="kpi-value">{data.faceValue ? `₹${data.faceValue}` : '—'}</div>
+                    <div className="kpi-sub">Per Share</div>
                   </div>
                 </div>
               </div>
@@ -324,10 +319,6 @@ export default function Dashboard() {
                     <div className="score-item">
                       <div className="score-item-label">Is the company profitable? (ROE)</div>
                       <div className={`score-item-val ${(data.roe||0)>0.15?'accent-green':data.roe?'accent-amber':'accent-red'}`}>{fmtPct(data.roe)}</div>
-                    </div>
-                    <div className="score-item">
-                      <div className="score-item-label">Is debt manageable? (Debt/Equity)</div>
-                      <div className={`score-item-val ${(data.debtToEquity||999)<50?'accent-green':(data.debtToEquity||0)<100?'accent-amber':'accent-red'}`}>{data.debtToEquity !== null ? fmtN((data.debtToEquity||0)/100, 2) + '×' : '—'}</div>
                     </div>
                   </div>
                 </div>
