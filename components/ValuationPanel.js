@@ -8,140 +8,140 @@ function fmtN(val, dec=2) {
   if (val === null || val === undefined) return '—'
   return parseFloat(val).toFixed(dec)
 }
+function scoreSignal(score) {
+  if (score === null || score === undefined) return { signal: 'neut', tag: '—' }
+  if (score > 1.5) return { signal: 'bull', tag: '🟢 Strong Buy' }
+  if (score > 1)   return { signal: 'bull', tag: '🟢 Undervalued' }
+  if (score >= 0.8)return { signal: 'neut', tag: '🟡 Fair Value' }
+  return { signal: 'bear', tag: '🔴 Overvalued' }
+}
+
+function ScoreCard({ title, desc, score, values, currentPrice }) {
+  const { signal, tag } = scoreSignal(score)
+  const isAvailable = score !== null && score !== undefined
+  const fairValue = isAvailable && currentPrice ? currentPrice * score : null
+  const barWidth = isAvailable ? Math.min(Math.max((score / 2) * 100, 2), 100) : 0
+  const barColor = signal === 'bull' ? 'var(--green)' : signal === 'bear' ? 'var(--red)' : 'var(--amber)'
+
+  return (
+    <div className="card">
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 16 }}>
+        <div>
+          <h3 style={{ fontSize: 17, fontWeight: 700, fontFamily: 'Space Grotesk' }}>{title}</h3>
+          <p style={{ fontSize: 11, color: 'var(--text3)', marginTop: 4 }}>{desc}</p>
+        </div>
+        {isAvailable && <span className={`val-signal ${signal}`}>{tag}</span>}
+      </div>
+
+      {/* Score + Fair Value */}
+      <div style={{ padding: '16px 0', borderTop: '1px solid var(--border)', borderBottom: '1px solid var(--border)', marginBottom: 16 }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
+          <div>
+            <div style={{ fontSize: 11, color: 'var(--text3)', marginBottom: 3 }}>Peter Lynch Score</div>
+            <div style={{ fontSize: 32, fontWeight: 800, fontFamily: 'Space Grotesk', color: barColor, lineHeight: 1 }}>
+              {isAvailable ? fmtN(score) : '—'}
+            </div>
+          </div>
+          <div style={{ textAlign: 'right' }}>
+            <div style={{ fontSize: 11, color: 'var(--text3)', marginBottom: 3 }}>Fair Value of Share</div>
+            <div style={{ fontSize: 26, fontWeight: 800, fontFamily: 'Space Grotesk', color: barColor, lineHeight: 1 }}>
+              {fmtINR(fairValue)}
+            </div>
+            <div style={{ fontSize: 11, color: 'var(--text3)', marginTop: 4 }}>Current Price × Score</div>
+          </div>
+        </div>
+
+        {/* Visual bar */}
+        <div style={{ background: 'var(--navy)', borderRadius: 6, height: 8, position: 'relative' }}>
+          <div style={{ background: barColor, borderRadius: 6, height: '100%', width: `${barWidth}%`, transition: 'width 0.4s ease' }} />
+          <div style={{ position: 'absolute', left: '50%', top: -4, width: 2, height: 16, background: 'var(--text3)', borderRadius: 1 }} />
+        </div>
+        <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 10, color: 'var(--text3)', marginTop: 4 }}>
+          <span>0 (Overvalued)</span>
+          <span>1.0 = Fair Value</span>
+          <span>2+ (Undervalued)</span>
+        </div>
+      </div>
+
+      {/* Formula */}
+      <div style={{ background: 'var(--navy)', padding: '10px 14px', borderRadius: 8, fontSize: 11, fontFamily: 'monospace', color: 'var(--text3)', marginBottom: 16 }}>
+        Score = (Growth% + DivYield%) ÷ P/E &nbsp;|&nbsp; Fair Value = Current Price × Score
+      </div>
+
+      {/* Values used */}
+      {values && (
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 12 }}>
+          <div>
+            <div style={{ fontSize: 11, color: 'var(--text3)', marginBottom: 4 }}>Growth Estimate</div>
+            <div style={{ fontSize: 13, fontWeight: 700 }}>{fmtN(values.growthPct)}%</div>
+          </div>
+          <div>
+            <div style={{ fontSize: 11, color: 'var(--text3)', marginBottom: 4 }}>Dividend Yield</div>
+            <div style={{ fontSize: 13, fontWeight: 700 }}>{fmtN(values.divYieldPct)}%</div>
+          </div>
+          <div>
+            <div style={{ fontSize: 11, color: 'var(--text3)', marginBottom: 4 }}>P/E Ratio</div>
+            <div style={{ fontSize: 13, fontWeight: 700 }}>{fmtN(values.pe)}</div>
+          </div>
+        </div>
+      )}
+    </div>
+  )
+}
 
 export default function ValuationPanel({ data }) {
   if (!data) return null
   const p = data.currentPrice
 
-  const blocks = [
-    {
-      id: 'lynch_current',
-      title: 'Peter Lynch Fair Value (Current)',
-      desc: 'Based on Trailing 12-Month EPS and Current Expected Growth.',
-      formula: 'EPS × (Growth + Div Yield) × 100',
-      value: data.peterLynchFairValue,
-      mos: data.peterLynchFairValue ? ((data.peterLynchFairValue - p) / data.peterLynchFairValue) * 100 : null,
-      mosLabel: 'Discount to Fair Value',
-      signal: data.peterLynchFairValue > p * 1.1 ? 'bull' : data.peterLynchFairValue < p * 0.9 ? 'bear' : 'neut',
-      tag: data.peterLynchFairValue > p * 1.1 ? '🟢 Discount' : data.peterLynchFairValue < p * 0.9 ? '🔴 Premium' : '🟡 Fair',
-      details: [
-        { l: 'Trailing EPS', v: fmtINR(data.eps) },
-        { l: 'Growth Rate', v: fmtN((data.earningsGrowth||0)*100) + '%' },
-        { l: 'Div Yield', v: fmtN((data.divYield||0)*100) + '%' }
-      ]
+  const periods = [
+    data.scoreNextQtr != null && {
+      title: 'Next Quarter',
+      desc: 'Uses next quarter YoY earnings growth estimate from Yahoo Finance.',
+      score: data.scoreNextQtr,
+      values: data.valuesNextQtr
+    },
+    data.scoreCurrYear != null && {
+      title: 'Current Year',
+      desc: 'Uses current fiscal year earnings growth estimate from Yahoo Finance.',
+      score: data.scoreCurrYear,
+      values: data.valuesCurrYear
+    },
+    data.scoreNextYear != null && {
+      title: 'Next Year',
+      desc: 'Uses next fiscal year earnings growth estimate from Yahoo Finance.',
+      score: data.scoreNextYear,
+      values: data.valuesNextYear
     }
-  ]
-
-  if (data.peterLynchFairValueNextQtr && data.nextQtrValues) {
-    blocks.push({
-      id: 'lynch_next_qtr',
-      title: 'Peter Lynch Fair Value (Next Qtr)',
-      desc: 'Based on Annualized Next Quarter EPS Estimates.',
-      formula: '(Next Qtr EPS × 4) × (Next Qtr Growth + Div Yield) × 100',
-      value: data.peterLynchFairValueNextQtr,
-      mos: data.peterLynchFairValueNextQtr ? ((data.peterLynchFairValueNextQtr - p) / data.peterLynchFairValueNextQtr) * 100 : null,
-      mosLabel: 'Discount to Fair Value',
-      signal: data.peterLynchFairValueNextQtr > p * 1.1 ? 'bull' : data.peterLynchFairValueNextQtr < p * 0.9 ? 'bear' : 'neut',
-      tag: data.peterLynchFairValueNextQtr > p * 1.1 ? '🟢 Discount' : data.peterLynchFairValueNextQtr < p * 0.9 ? '🔴 Premium' : '🟡 Fair',
-      details: [
-        { l: 'Annualized EPS', v: fmtINR(data.nextQtrValues.eps) },
-        { l: 'Growth Rate', v: fmtN(data.nextQtrValues.growth * 100) + '%' },
-        { l: 'Div Yield', v: fmtN(data.nextQtrValues.divYield * 100) + '%' }
-      ]
-    })
-  }
-
-  if (data.peterLynchFairValueNextYear && data.nextYearValues) {
-    blocks.push({
-      id: 'lynch_next_year',
-      title: 'Peter Lynch Fair Value (Next Year)',
-      desc: 'Based on Next Year (FY) EPS Estimates.',
-      formula: 'Next Year EPS × (Next Year Growth + Div Yield) × 100',
-      value: data.peterLynchFairValueNextYear,
-      mos: data.peterLynchFairValueNextYear ? ((data.peterLynchFairValueNextYear - p) / data.peterLynchFairValueNextYear) * 100 : null,
-      mosLabel: 'Discount to Fair Value',
-      signal: data.peterLynchFairValueNextYear > p * 1.1 ? 'bull' : data.peterLynchFairValueNextYear < p * 0.9 ? 'bear' : 'neut',
-      tag: data.peterLynchFairValueNextYear > p * 1.1 ? '🟢 Discount' : data.peterLynchFairValueNextYear < p * 0.9 ? '🔴 Premium' : '🟡 Fair',
-      details: [
-        { l: 'Expected EPS', v: fmtINR(data.nextYearValues.eps) },
-        { l: 'Growth Rate', v: fmtN(data.nextYearValues.growth * 100) + '%' },
-        { l: 'Div Yield', v: fmtN(data.nextYearValues.divYield * 100) + '%' }
-      ]
-    })
-  }
-
-  const targetPrice = data.peterLynchFairValue ? data.peterLynchFairValue * 1.15 : null
-  const upsidePct = targetPrice && p ? ((targetPrice - p) / p) * 100 : null
+  ].filter(Boolean)
 
   return (
     <div className="main-grid">
+      {/* Header */}
       <div className="card" style={{ gridColumn: '1 / -1', background: 'rgba(59,130,246,0.05)', borderColor: 'rgba(59,130,246,0.2)' }}>
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 16 }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: 16 }}>
           <div>
-            <h3 style={{ fontSize: 14, color: 'var(--blue2)', marginBottom: 4, textTransform: 'uppercase', letterSpacing: '0.05em' }}>Target Price</h3>
-            <div style={{ fontSize: 36, fontWeight: 800, fontFamily: 'Space Grotesk' }}>{fmtINR(targetPrice)}</div>
-            <div style={{ fontSize: 13, color: 'var(--text2)', marginTop: 4 }}>
-              Target = Current Peter Lynch Fair Value × 1.15 buffer
-            </div>
+            <h3 style={{ fontSize: 14, color: 'var(--blue2)', marginBottom: 8, textTransform: 'uppercase', letterSpacing: '0.05em' }}>Peter Lynch Valuation</h3>
+            <p style={{ fontSize: 13, color: 'var(--text2)', lineHeight: 1.7 }}>
+              <strong>Score</strong> = (EPS Growth% + Dividend Yield%) ÷ P/E &nbsp;|&nbsp;
+              <strong>Fair Value</strong> = Current Price × Score<br/>
+              Score &gt; 1: Undervalued &nbsp;·&nbsp; Score = 1: Fair &nbsp;·&nbsp; Score &lt; 1: Overvalued
+            </p>
           </div>
           <div style={{ textAlign: 'right' }}>
-            <div style={{ fontSize: 13, color: 'var(--text3)', marginBottom: 4 }}>Current Price</div>
-            <div style={{ fontSize: 24, fontWeight: 700, fontFamily: 'Space Grotesk', color: 'var(--text)' }}>{fmtINR(p)}</div>
-            {upsidePct !== null && (
-              <div className={`tag ${upsidePct >= 0 ? 'tag-green' : 'tag-red'}`} style={{ marginTop: 8, fontSize: 14, padding: '6px 12px' }}>
-                {upsidePct >= 0 ? '▲' : '▼'} {fmtN(Math.abs(upsidePct))}% {upsidePct >= 0 ? 'Upside' : 'Downside'}
-              </div>
-            )}
+            <div style={{ fontSize: 12, color: 'var(--text3)' }}>Current Price</div>
+            <div style={{ fontSize: 28, fontWeight: 800, fontFamily: 'Space Grotesk' }}>
+              {'₹' + parseFloat(p).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+            </div>
           </div>
         </div>
       </div>
 
+      {/* Score cards */}
       <div className="grid-2" style={{ gridColumn: '1 / -1' }}>
-        {blocks.map(b => {
-          return (
-            <div key={b.id} className="card">
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 16 }}>
-                <div>
-                  <h3 style={{ fontSize: 18, fontWeight: 700, fontFamily: 'Space Grotesk', display: 'flex', alignItems: 'center', gap: '8px' }}>
-                    {b.title}
-                  </h3>
-                  <p style={{ fontSize: 12, color: 'var(--text3)', marginTop: 4 }}>{b.desc}</p>
-                </div>
-                <span className={`val-signal ${b.signal}`}>{b.tag}</span>
-              </div>
-              
-              <div style={{ padding: '16px 0', borderTop: '1px solid var(--border)', borderBottom: '1px solid var(--border)', marginBottom: 16 }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                  <div style={{ fontSize: 12, color: 'var(--text2)' }}>Calculated Value</div>
-                  <div style={{ fontSize: 24, fontWeight: 700, fontFamily: 'Space Grotesk' }}>
-                    {typeof b.value === 'number' ? fmtINR(b.value) : b.value || '—'}
-                  </div>
-                </div>
-                {b.mos !== null && (
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: 8 }}>
-                    <div style={{ fontSize: 12, color: 'var(--text2)' }}>{b.mosLabel}</div>
-                    <div className={`val-number ${b.mos > 0 ? 'accent-green' : 'accent-red'}`}>
-                      {b.mos > 0 ? '+' : ''}{fmtN(b.mos)}%
-                    </div>
-                  </div>
-                )}
-              </div>
-
-              <div style={{ background: 'var(--navy)', padding: 12, borderRadius: 8, fontSize: 11, fontFamily: 'monospace', color: 'var(--text3)', marginBottom: 16 }}>
-                {b.formula}
-              </div>
-
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 12 }}>
-                {b.details.map(d => (
-                  <div key={d.l}>
-                    <div style={{ fontSize: 11, color: 'var(--text3)', marginBottom: 4 }}>{d.l}</div>
-                    <div style={{ fontSize: 13, fontWeight: 600 }}>{d.v}</div>
-                  </div>
-                ))}
-              </div>
-            </div>
-          )
-        })}
+        {periods.length > 0
+          ? periods.map(period => <ScoreCard key={period.title} {...period} currentPrice={p} />)
+          : <div className="card" style={{ gridColumn: '1 / -1', textAlign: 'center', color: 'var(--text3)' }}>No analyst estimates available for this stock.</div>
+        }
       </div>
     </div>
   )

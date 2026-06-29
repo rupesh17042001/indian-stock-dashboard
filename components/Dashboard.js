@@ -322,9 +322,9 @@ export default function Dashboard() {
               <div className="card">
                 <div className="card-title"><span className="card-title-icon">📐</span>Quick Valuation</div>
                 {[
-                  { label: 'Peter Lynch Fair Value', value: fmtINR(data.peterLynchFairValue), sub: 'EPS × (Growth + Div Yield) × 100', signal: (data.peterLynchFairValue||0) > data.currentPrice ? 'bull' : 'bear', tag: '' },
-                  { label: 'PEG Ratio', value: fmtN(data.pegRatio || data.pegyRatio), sub: '<1 = undervalued', signal: (data.pegRatio||9) < 1 ? 'bull' : (data.pegRatio||0) > 2 ? 'bear' : 'neut', tag: '' },
-                  { label: 'Target Price', value: fmtINR(data.targetPrice), sub: 'Peter Lynch FV × 1.15', signal: 'neut', tag: '' },
+                  { label: 'PL Fair Value (Next Qtr)', value: data.scoreNextQtr ? fmtINR(data.currentPrice * data.scoreNextQtr) : '—', sub: `Score: ${fmtN(data.scoreNextQtr)}`, signal: (data.scoreNextQtr||0) > 1 ? 'bull' : (data.scoreNextQtr||0) < 0.8 ? 'bear' : 'neut', tag: (data.scoreNextQtr||0) > 1 ? '🟢 Undervalued' : (data.scoreNextQtr||0) < 0.8 ? '🔴 Overvalued' : '🟡 Fair' },
+                  { label: 'PL Fair Value (Curr Year)', value: data.scoreCurrYear ? fmtINR(data.currentPrice * data.scoreCurrYear) : '—', sub: `Score: ${fmtN(data.scoreCurrYear)}`, signal: (data.scoreCurrYear||0) > 1 ? 'bull' : (data.scoreCurrYear||0) < 0.8 ? 'bear' : 'neut', tag: '' },
+                  { label: 'PL Fair Value (Next Year)', value: data.scoreNextYear ? fmtINR(data.currentPrice * data.scoreNextYear) : '—', sub: `Score: ${fmtN(data.scoreNextYear)}`, signal: (data.scoreNextYear||0) > 1 ? 'bull' : (data.scoreNextYear||0) < 0.8 ? 'bear' : 'neut', tag: '' },
                   { label: 'Earnings Yield', value: fmtN(data.earningsYield) + '%', sub: 'vs 10Y G-Sec ~7%', signal: (data.earningsYield||0) > 7 ? 'bull' : 'bear', tag: '' },
                 ].map(item => (
                   <div className="val-row" key={item.label}>
@@ -354,10 +354,6 @@ export default function Dashboard() {
                     <div className="score-item">
                       <div className="score-item-label">Piotroski F-Score</div>
                       <div className={`score-item-val ${data.piotroski>=7?'accent-green':data.piotroski>=4?'accent-amber':'accent-red'}`}>{data.piotroski}/9</div>
-                    </div>
-                    <div className="score-item">
-                      <div className="score-item-label">Altman Z-Score</div>
-                      <div className={`score-item-val ${data.altmanZ>2.99?'accent-green':data.altmanZ>1.81?'accent-amber':'accent-red'}`}>{fmtN(data.altmanZ)}</div>
                     </div>
                     <div className="score-item">
                       <div className="score-item-label">ROE</div>

@@ -120,43 +120,45 @@ export async function GET(request) {
               ((stmt.totalCashFromOperatingActivities || 0) + (stmt.capitalExpenditures || 0)),
     })).filter(a => a.year)
 
-    // ── Valuation Calculations ─────────────────────────────────────────────
-    // EPS growth rate: use YoY if available, fallback to earningsGrowth
-    const epsGrowthRate = earningsGrowth ?? 0.12
-    const peterLynchScore = eps && pe && epsGrowthRate !== null
-      ? (epsGrowthRate * 100 + (divYield || 0) * 100) / pe : null
+    // ── Valuation: Peter Lynch Score = (Growth% + DivYield%) / PE ───────────
+    // Growth rates are decimals from Yahoo (e.g. 0.12 = 12%). Convert to whole numbers.
+    const divYieldPct = (divYield || 0) * 100   // e.g. 4.7
 
-    const pegyRatio = pe && epsGrowthRate !== null && divYield !== null
-      ? pe / ((epsGrowthRate + (divYield || 0)) * 100) : null
+    // Current period: uses financialData.earningsGrowth (analyst consensus)
+    const currentGrowthPct = earningsGrowth != null
+      ? Math.max(-50, Math.min(50, earningsGrowth * 100)) : null
 
-    // EPS-based fair value: Peter Lynch Fair Value
-    // Fair P/E = Growth Rate + Dividend Yield
-    const peterLynchFairValue = eps !== null && epsGrowthRate !== null
-      ? eps * ((epsGrowthRate + (divYield || 0)) * 100) : null
+    const peterLynchScore = pe && pe > 0 && currentGrowthPct != null
+      ? (currentGrowthPct + divYieldPct) / pe : null
+    const pegyRatio = peterLynchScore
 
-    let peterLynchFairValueNextQtr = null;
-    let nextQtrValues = null;
-    let peterLynchFairValueNextYear = null;
-    let nextYearValues = null;
+    // Scores for each earningsTrend period using their own growth estimates
+    let scoreNextQtr = null, valuesNextQtr = null
+    let scoreCurrYear = null, valuesCurrYear = null
+    let scoreNextYear = null, valuesNextYear = null
 
     if (earningsTrend && earningsTrend.length > 0) {
-      const nextQtr = earningsTrend.find(t => t.period === '+1q');
-      if (nextQtr && nextQtr.earningsEstimate?.avg && nextQtr.growth !== null && nextQtr.growth !== undefined) {
-        // Annualize quarterly EPS to calculate a comparable share price fair value
-        const annualizedEps = nextQtr.earningsEstimate.avg * 4;
-        peterLynchFairValueNextQtr = annualizedEps * ((nextQtr.growth + (divYield || 0)) * 100);
-        nextQtrValues = { eps: annualizedEps, growth: nextQtr.growth, divYield: divYield || 0 };
+      const tNextQtr   = earningsTrend.find(t => t.period === '+1q')
+      const tCurrYear  = earningsTrend.find(t => t.period === '0y')
+      const tNextYear  = earningsTrend.find(t => t.period === '+1y')
+
+      if (tNextQtr && tNextQtr.growth != null && pe > 0) {
+        const g = Math.max(-50, Math.min(50, tNextQtr.growth * 100))
+        scoreNextQtr = (g + divYieldPct) / pe
+        valuesNextQtr = { growthPct: tNextQtr.growth * 100, divYieldPct, pe }
       }
-      
-      const nextYear = earningsTrend.find(t => t.period === '+1y');
-      if (nextYear && nextYear.earningsEstimate?.avg && nextYear.growth !== null && nextYear.growth !== undefined) {
-        peterLynchFairValueNextYear = nextYear.earningsEstimate.avg * ((nextYear.growth + (divYield || 0)) * 100);
-        nextYearValues = { eps: nextYear.earningsEstimate.avg, growth: nextYear.growth, divYield: divYield || 0 };
+      if (tCurrYear && tCurrYear.growth != null && pe > 0) {
+        const g = Math.max(-50, Math.min(50, tCurrYear.growth * 100))
+        scoreCurrYear = (g + divYieldPct) / pe
+        valuesCurrYear = { growthPct: tCurrYear.growth * 100, divYieldPct, pe }
+      }
+      if (tNextYear && tNextYear.growth != null && pe > 0) {
+        const g = Math.max(-50, Math.min(50, tNextYear.growth * 100))
+        scoreNextYear = (g + divYieldPct) / pe
+        valuesNextYear = { growthPct: tNextYear.growth * 100, divYieldPct, pe }
       }
     }
 
-    const targetPrice = peterLynchFairValue ? peterLynchFairValue * 1.15 : null
-    const upsidePct = targetPrice && currentPrice ? ((targetPrice - currentPrice) / currentPrice) * 100 : null
     const earningsYield = eps && currentPrice ? (eps / currentPrice) * 100 : null
 
     // ── Piotroski F-Score ──────────────────────────────────────────────────
@@ -197,22 +199,6 @@ export async function GET(request) {
     const piotroski = f1+f2+f3+f4+f5+f6+f7+f8+f9
     const piotroskiSignals = { f1, f2, f3, f4, f5, f6, f7, f8, f9 }
 
-    // ── Altman Z-Score (proxy) ─────────────────────────────────────────────
-    const totalAssets = latestBS?.totalAssets || 1
-    const totalLiab   = latestBS?.totalLiab || 0
-    const workingCap  = (latestBS?.totalCurrentAssets || 0) - (latestBS?.totalCurrentLiabilities || 0)
-    const retainedEarnings = latestBS?.retainedEarnings || 0
-    const ebitVal     = latestIS?.ebit || 0
-    const revenues    = latestIS?.totalRevenue || 0
-    const mvEquity    = marketCap || 0
-    const bookDebt    = totalLiab || 1
-
-    const X1 = workingCap / totalAssets
-    const X2 = retainedEarnings / totalAssets
-    const X3 = ebitVal / totalAssets
-    const X4 = mvEquity / bookDebt
-    const X5 = revenues / totalAssets
-    const altmanZ = 1.2*X1 + 1.4*X2 + 3.3*X3 + 0.6*X4 + 1.0*X5
 
     // ── Financial Health Score /100 ────────────────────────────────────────
     let healthScore = 0
@@ -276,18 +262,18 @@ export async function GET(request) {
       // Valuation
       peterLynchScore,
       pegyRatio,
-      peterLynchFairValue,
-      peterLynchFairValueNextQtr,
-      nextQtrValues,
-      peterLynchFairValueNextYear,
-      nextYearValues,
-      targetPrice,
-      upsidePct,
+      currentGrowthPct,
+      divYieldPct,
+      scoreNextQtr,
+      valuesNextQtr,
+      scoreCurrYear,
+      valuesCurrYear,
+      scoreNextYear,
+      valuesNextYear,
       earningsYield,
       // Health
       piotroski,
       piotroskiSignals,
-      altmanZ,
       healthScore,
       overallSignal,
       // Historical

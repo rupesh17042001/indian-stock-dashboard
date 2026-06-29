@@ -76,22 +76,8 @@ export default function HealthPanel({ data }) {
       <div className="card">
         <div className="section-header">
           <div className="section-dot" style={{ background: 'var(--gradient2)' }} />
-          <h3 className="section-title">Altman Z-Score</h3>
+          <h3 className="section-title">Key Solvency Metrics</h3>
         </div>
-
-        <div style={{ display: 'flex', alignItems: 'baseline', gap: 12, marginBottom: 20 }}>
-          <div style={{ fontSize: 48, fontWeight: 800, fontFamily: 'Space Grotesk', lineHeight: 1, color: data.altmanZ > 2.99 ? 'var(--green)' : data.altmanZ > 1.81 ? 'var(--amber)' : 'var(--red)' }}>
-            {fmtN(data.altmanZ)}
-          </div>
-        </div>
-
-        <div style={{ padding: '12px 16px', background: data.altmanZ > 2.99 ? 'rgba(34,197,94,0.1)' : data.altmanZ > 1.81 ? 'rgba(245,158,11,0.1)' : 'rgba(239,68,68,0.1)', borderRadius: 8, marginBottom: 24 }}>
-          <div style={{ fontSize: 13, fontWeight: 600, color: data.altmanZ > 2.99 ? 'var(--green)' : data.altmanZ > 1.81 ? 'var(--amber)' : 'var(--red)' }}>
-            {data.altmanZ > 2.99 ? '🟢 Safe Zone (Low Bankruptcy Risk)' : data.altmanZ > 1.81 ? '🟡 Grey Zone (Moderate Risk)' : '🔴 Distress Zone (High Risk)'}
-          </div>
-        </div>
-
-        <h4 style={{ fontSize: 14, marginBottom: 12, color: 'var(--text2)' }}>Key Solvency Metrics</h4>
         <div className="kpi-grid">
           <div className="kpi">
             <div className="kpi-label">Debt to Equity</div>
