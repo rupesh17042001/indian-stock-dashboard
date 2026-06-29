@@ -25,8 +25,18 @@ export async function GET(request) {
     ];
 
     let result;
+    let screenerHtml = '';
+    const cleanTicker = ticker.split('.')[0];
+    
     try {
-        result = await yahooFinance.quoteSummary(symbol, { modules });
+        const fetchScreener = fetch(`https://www.screener.in/company/${cleanTicker}/consolidated/`, {
+          headers: { 'User-Agent': 'Mozilla/5.0' }
+        }).then(res => res.text()).catch(() => '');
+
+        [result, screenerHtml] = await Promise.all([
+          yahooFinance.quoteSummary(symbol, { modules }),
+          fetchScreener
+        ]);
     } catch (e) {
         return Response.json({ error: `Stock "${ticker}" not found. Try NSE symbol like RELIANCE, TCS, INFY` }, { status: 404 });
     }
@@ -92,6 +102,14 @@ export async function GET(request) {
     const sector         = price?.sector || null
     const industry       = price?.industry || null
     const exchange       = price?.exchangeName || 'NSE'
+
+    let faceValue = null;
+    if (screenerHtml) {
+      const match = screenerHtml.match(/<span class="name">\s*Face Value\s*<\/span>[\s\S]*?<span class="number">([^<]+)<\/span>/);
+      if (match && !isNaN(parseFloat(match[1]))) {
+        faceValue = parseFloat(match[1]);
+      }
+    }
 
     // ── Historical Income Statement (last 4 years) ─────────────────────────
     const annuals = is.slice(0, 4).map(stmt => ({
@@ -247,6 +265,7 @@ export async function GET(request) {
       evEbitda,
       evRevenue,
       sharesOut,
+      faceValue,
       // Profitability
       roe,
       roa,
