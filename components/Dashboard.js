@@ -154,8 +154,8 @@ export default function Dashboard() {
           <div className="landing-logo">📈</div>
           <h1 className="landing-title">Indian Stock Valuation</h1>
           <p className="landing-sub">
-            Professional-grade stock analysis for NSE &amp; BSE — Graham Value,
-            Peter Lynch Score, Piotroski F-Score, Altman Z, DCF &amp; more. Free. Live. Shareable.
+            Simple, easy-to-understand stock analysis for NSE &amp; BSE. 
+            Find out if a stock is fairly valued and financially healthy. Free, live, and shareable.
           </p>
           <div className="landing-chips">
             {POPULAR.map(sym => (
@@ -214,10 +214,7 @@ export default function Dashboard() {
                 <div className="signal-text">
                   <h2>{signalLabel}</h2>
                   <p>
-                    Peter Lynch Score: <strong>{fmtN(data.peterLynchScore)}</strong> ·
-                    Graham MoS: <strong>{fmtN(data.mosGraham)}%</strong> ·
-                    Piotroski: <strong>{data.piotroski}/9</strong> ·
-                    Health Score: <strong>{data.healthScore}/100</strong>
+                    Based on our analysis of the company's growth potential and financial health.
                   </p>
                 </div>
                 {data.targetPrice && (
@@ -258,62 +255,32 @@ export default function Dashboard() {
                   <div className="kpi">
                     <div className="kpi-label">P/E Ratio</div>
                     <div className={`kpi-value ${(data.pe||99)<25?'green':(data.pe||0)>40?'red':'amber'}`}>{fmtN(data.pe)}</div>
-                    <div className="kpi-sub">Fwd P/E: {fmtN(data.fwdPE)}</div>
-                  </div>
-                  <div className="kpi">
-                    <div className="kpi-label">EPS (₹)</div>
-                    <div className="kpi-value blue">{fmtN(data.eps)}</div>
-                    <div className="kpi-sub">Trailing 12M</div>
-                  </div>
-                  <div className="kpi">
-                    <div className="kpi-label">Book Value (₹)</div>
-                    <div className="kpi-value">{fmtN(data.bookValue)}</div>
-                    <div className="kpi-sub">P/B: {fmtN(data.pb)}</div>
+                    <div className="kpi-sub">Price to Earnings</div>
                   </div>
                   <div className="kpi">
                     <div className="kpi-label">Market Cap</div>
                     <div className="kpi-value gold">{fmt(data.marketCap, '₹')}</div>
-                    <div className="kpi-sub">Shares: {fmt(data.sharesOut)}</div>
+                    <div className="kpi-sub">Company Size</div>
                   </div>
                   <div className="kpi">
                     <div className="kpi-label">ROE</div>
                     <div className={`kpi-value ${(data.roe||0)>0.15?'green':(data.roe||0)>0.10?'amber':'red'}`}>{fmtPct(data.roe)}</div>
-                    <div className="kpi-sub">Return on Equity</div>
-                  </div>
-                  <div className="kpi">
-                    <div className="kpi-label">Net Margin</div>
-                    <div className={`kpi-value ${(data.profitMargin||0)>0.15?'green':(data.profitMargin||0)>0.07?'amber':'red'}`}>{fmtPct(data.profitMargin)}</div>
-                    <div className="kpi-sub">Op Margin: {fmtPct(data.operMargin)}</div>
+                    <div className="kpi-sub">Return on Equity (Profitability)</div>
                   </div>
                   <div className="kpi">
                     <div className="kpi-label">Debt/Equity</div>
                     <div className={`kpi-value ${(data.debtToEquity||999)<50?'green':(data.debtToEquity||0)<100?'amber':'red'}`}>{data.debtToEquity !== null ? fmtN(data.debtToEquity/100, 2) : '—'}</div>
-                    <div className="kpi-sub">×</div>
-                  </div>
-                  <div className="kpi">
-                    <div className="kpi-label">Current Ratio</div>
-                    <div className={`kpi-value ${(data.currentRatio||0)>2?'green':(data.currentRatio||0)>1?'amber':'red'}`}>{fmtN(data.currentRatio)}</div>
-                    <div className="kpi-sub">Liquidity</div>
+                    <div className="kpi-sub">Financial Leverage</div>
                   </div>
                   <div className="kpi">
                     <div className="kpi-label">Div Yield</div>
                     <div className="kpi-value amber">{data.divYield ? fmtN(data.divYield * 100) + '%' : '—'}</div>
-                    <div className="kpi-sub">Annual: ₹{fmtN(data.annualDiv)}</div>
-                  </div>
-                  <div className="kpi">
-                    <div className="kpi-label">Beta</div>
-                    <div className={`kpi-value ${Math.abs(data.beta||1)<1?'green':'amber'}`}>{fmtN(data.beta)}</div>
-                    <div className="kpi-sub">Volatility</div>
+                    <div className="kpi-sub">Annual Dividend Return</div>
                   </div>
                   <div className="kpi">
                     <div className="kpi-label">Free Cash Flow</div>
                     <div className={`kpi-value ${(data.fcf||0)>0?'green':'red'}`}>{fmt(data.fcf, '₹')}</div>
-                    <div className="kpi-sub">Annual</div>
-                  </div>
-                  <div className="kpi">
-                    <div className="kpi-label">EV/EBITDA</div>
-                    <div className={`kpi-value ${(data.evEbitda||99)<15?'green':(data.evEbitda||0)>25?'red':'amber'}`}>{fmtN(data.evEbitda)}</div>
-                    <div className="kpi-sub">Enterprise Value</div>
+                    <div className="kpi-sub">Cash generated</div>
                   </div>
                 </div>
               </div>
@@ -322,10 +289,9 @@ export default function Dashboard() {
               <div className="card">
                 <div className="card-title"><span className="card-title-icon">📐</span>Quick Valuation</div>
                 {[
-                  { label: 'PL Fair Value (Next Qtr)', value: data.scoreNextQtr ? fmtINR(data.currentPrice * data.scoreNextQtr) : '—', sub: `Score: ${fmtN(data.scoreNextQtr)}`, signal: (data.scoreNextQtr||0) > 1 ? 'bull' : (data.scoreNextQtr||0) < 0.8 ? 'bear' : 'neut', tag: (data.scoreNextQtr||0) > 1 ? '🟢 Undervalued' : (data.scoreNextQtr||0) < 0.8 ? '🔴 Overvalued' : '🟡 Fair' },
-                  { label: 'PL Fair Value (Curr Year)', value: data.scoreCurrYear ? fmtINR(data.currentPrice * data.scoreCurrYear) : '—', sub: `Score: ${fmtN(data.scoreCurrYear)}`, signal: (data.scoreCurrYear||0) > 1 ? 'bull' : (data.scoreCurrYear||0) < 0.8 ? 'bear' : 'neut', tag: '' },
-                  { label: 'PL Fair Value (Next Year)', value: data.scoreNextYear ? fmtINR(data.currentPrice * data.scoreNextYear) : '—', sub: `Score: ${fmtN(data.scoreNextYear)}`, signal: (data.scoreNextYear||0) > 1 ? 'bull' : (data.scoreNextYear||0) < 0.8 ? 'bear' : 'neut', tag: '' },
-                  { label: 'Earnings Yield', value: fmtN(data.earningsYield) + '%', sub: 'vs 10Y G-Sec ~7%', signal: (data.earningsYield||0) > 7 ? 'bull' : 'bear', tag: '' },
+                  { label: 'Fair Value (Next Quarter)', value: data.scoreNextQtr ? fmtINR(data.currentPrice * data.scoreNextQtr) : '—', sub: `Based on expected short-term growth`, signal: (data.scoreNextQtr||0) > 1 ? 'bull' : (data.scoreNextQtr||0) < 0.8 ? 'bear' : 'neut', tag: (data.scoreNextQtr||0) > 1 ? '🟢 Undervalued' : (data.scoreNextQtr||0) < 0.8 ? '🔴 Overvalued' : '🟡 Fair' },
+                  { label: 'Fair Value (Current Year)', value: data.scoreCurrYear ? fmtINR(data.currentPrice * data.scoreCurrYear) : '—', sub: `Based on expected full-year growth`, signal: (data.scoreCurrYear||0) > 1 ? 'bull' : (data.scoreCurrYear||0) < 0.8 ? 'bear' : 'neut', tag: '' },
+                  { label: 'Fair Value (Next Year)', value: data.scoreNextYear ? fmtINR(data.currentPrice * data.scoreNextYear) : '—', sub: `Based on expected long-term growth`, signal: (data.scoreNextYear||0) > 1 ? 'bull' : (data.scoreNextYear||0) < 0.8 ? 'bear' : 'neut', tag: '' }
                 ].map(item => (
                   <div className="val-row" key={item.label}>
                     <div>
@@ -356,11 +322,11 @@ export default function Dashboard() {
                       <div className={`score-item-val ${data.piotroski>=7?'accent-green':data.piotroski>=4?'accent-amber':'accent-red'}`}>{data.piotroski}/9</div>
                     </div>
                     <div className="score-item">
-                      <div className="score-item-label">ROE</div>
+                      <div className="score-item-label">Is the company profitable? (ROE)</div>
                       <div className={`score-item-val ${(data.roe||0)>0.15?'accent-green':data.roe?'accent-amber':'accent-red'}`}>{fmtPct(data.roe)}</div>
                     </div>
                     <div className="score-item">
-                      <div className="score-item-label">Debt/Equity</div>
+                      <div className="score-item-label">Is debt manageable? (Debt/Equity)</div>
                       <div className={`score-item-val ${(data.debtToEquity||999)<50?'accent-green':(data.debtToEquity||0)<100?'accent-amber':'accent-red'}`}>{data.debtToEquity !== null ? fmtN((data.debtToEquity||0)/100, 2) + '×' : '—'}</div>
                     </div>
                   </div>

@@ -95,20 +95,20 @@ export default function ValuationPanel({ data }) {
 
   const periods = [
     data.scoreNextQtr != null && {
-      title: 'Next Quarter',
-      desc: 'Uses next quarter YoY earnings growth estimate from Yahoo Finance.',
+      title: 'Short Term (Next Quarter)',
+      desc: 'Based on expected growth for the upcoming quarter.',
       score: data.scoreNextQtr,
       values: data.valuesNextQtr
     },
     data.scoreCurrYear != null && {
-      title: 'Current Year',
-      desc: 'Uses current fiscal year earnings growth estimate from Yahoo Finance.',
+      title: 'Medium Term (Current Year)',
+      desc: 'Based on expected growth for the current financial year.',
       score: data.scoreCurrYear,
       values: data.valuesCurrYear
     },
     data.scoreNextYear != null && {
-      title: 'Next Year',
-      desc: 'Uses next fiscal year earnings growth estimate from Yahoo Finance.',
+      title: 'Long Term (Next Year)',
+      desc: 'Based on expected growth for the next financial year.',
       score: data.scoreNextYear,
       values: data.valuesNextYear
     }
@@ -120,11 +120,13 @@ export default function ValuationPanel({ data }) {
       <div className="card" style={{ gridColumn: '1 / -1', background: 'rgba(59,130,246,0.05)', borderColor: 'rgba(59,130,246,0.2)' }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: 16 }}>
           <div>
-            <h3 style={{ fontSize: 14, color: 'var(--blue2)', marginBottom: 8, textTransform: 'uppercase', letterSpacing: '0.05em' }}>Peter Lynch Valuation</h3>
-            <p style={{ fontSize: 13, color: 'var(--text2)', lineHeight: 1.7 }}>
-              <strong>Score</strong> = (EPS Growth% + Dividend Yield%) ÷ P/E &nbsp;|&nbsp;
-              <strong>Fair Value</strong> = Current Price × Score<br/>
-              Score &gt; 1: Undervalued &nbsp;·&nbsp; Score = 1: Fair &nbsp;·&nbsp; Score &lt; 1: Overvalued
+            <h3 style={{ fontSize: 16, color: 'var(--blue2)', marginBottom: 8, textTransform: 'uppercase', letterSpacing: '0.05em', fontWeight: 800 }}>Is the stock fairly priced?</h3>
+            <p style={{ fontSize: 13, color: 'var(--text2)', lineHeight: 1.7, maxWidth: 800 }}>
+              This panel uses the <strong>Peter Lynch approach</strong> to find the true value of a share based on its expected growth and dividends.
+              <br/><br/>
+              <strong>Score &gt; 1:</strong> 🟢 <strong>Undervalued.</strong> The expected growth and dividend returns are higher than what you are paying for the stock today.<br/>
+              <strong>Score = 1:</strong> 🟡 <strong>Fair Value.</strong> The price perfectly matches the expected growth.<br/>
+              <strong>Score &lt; 1:</strong> 🔴 <strong>Overvalued.</strong> The stock is expensive compared to how much it is expected to grow.
             </p>
           </div>
           <div style={{ textAlign: 'right' }}>
