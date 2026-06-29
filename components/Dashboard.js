@@ -46,6 +46,9 @@ export default function Dashboard() {
   const [error,    setError]    = useState(null)
   const [tab,      setTab]      = useState('Overview')
   const [toast,    setToast]    = useState(false)
+  
+  const [suggestions, setSuggestions] = useState([])
+  const [showSuggestions, setShowSuggestions] = useState(false)
 
   const fetchStock = useCallback(async (sym) => {
     if (!sym) return
@@ -71,8 +74,24 @@ export default function Dashboard() {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
+  useEffect(() => {
+    if (!input.trim() || input.toUpperCase() === ticker) {
+      setSuggestions([])
+      return
+    }
+    const timer = setTimeout(async () => {
+      try {
+        const res = await fetch(`/api/search?q=${encodeURIComponent(input)}`)
+        const json = await res.json()
+        setSuggestions(json)
+      } catch(e) {}
+    }, 300)
+    return () => clearTimeout(timer)
+  }, [input, ticker])
+
   const handleSearch = (e) => {
     e.preventDefault()
+    setShowSuggestions(false)
     if (input.trim()) fetchStock(input.trim().toUpperCase())
   }
 
@@ -107,10 +126,30 @@ export default function Dashboard() {
             <input
               className="search-input"
               value={input}
-              onChange={e => setInput(e.target.value.toUpperCase())}
-              placeholder="NSE ticker — e.g. RELIANCE, TCS…"
+              onChange={e => {
+                setInput(e.target.value)
+                setShowSuggestions(true)
+              }}
+              onFocus={() => { if (suggestions.length > 0) setShowSuggestions(true) }}
+              onBlur={() => setTimeout(() => setShowSuggestions(false), 200)}
+              placeholder="Search by company name or ticker..."
             />
             <button type="submit" className="search-btn">GO</button>
+
+            {showSuggestions && suggestions.length > 0 && (
+              <div className="suggestions-dropdown">
+                {suggestions.map(s => (
+                  <div key={s.symbol} className="suggestion-item" onClick={() => {
+                    setInput(s.symbol)
+                    fetchStock(s.symbol)
+                    setShowSuggestions(false)
+                  }}>
+                    <div className="sugg-name">{s.name}</div>
+                    <div className="sugg-sym">{s.symbol} &middot; {s.exchange}</div>
+                  </div>
+                ))}
+              </div>
+            )}
           </form>
 
           <div className="nav-links">

@@ -98,6 +98,22 @@ body {
 }
 .search-btn:hover { opacity: 0.85; }
 
+.suggestions-dropdown {
+  position: absolute; top: calc(100% + 8px); left: 0; right: 0;
+  background: var(--navy2); border: 1px solid var(--border2);
+  border-radius: 12px; padding: 8px 0;
+  box-shadow: var(--shadow); z-index: 1000;
+  max-height: 300px; overflow-y: auto;
+}
+.suggestion-item {
+  padding: 10px 16px; cursor: pointer; transition: all 0.2s;
+  display: flex; flex-direction: column; gap: 4px;
+}
+.suggestion-item:hover { background: rgba(59,130,246,0.12); }
+.sugg-name { font-size: 13px; font-weight: 600; color: var(--text); }
+.sugg-sym { font-size: 11px; color: var(--text3); font-family: 'Space Grotesk', sans-serif; }
+
+
 .nav-links { display: flex; gap: 4px; margin-left: auto; flex-shrink: 0; }
 .nav-link {
   padding: 7px 14px; border-radius: 8px; font-size: 13px; font-weight: 500;
